@@ -216,6 +216,8 @@ static void example_espnow_task(void *pvParameter)
     }*/
 
     static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x34, 0x85, 0x18, 0xb9, 0x1b, 0x9c };
+    
+    //static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x48, 0x27, 0xe2, 0x3b, 0x30, 0xc4 };
 
     add_peer(my_peer, true);
 
@@ -401,6 +403,9 @@ static void example_espnow_task(void *pvParameter)
                     }
                     else if(strcmp((char *)payload, "RTS") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
+
+                        ESP_LOGI(TAG, "Send data to "MACSTR", data: CTS", MAC2STR(my_peer));
+
                         if (send_param == NULL) {
                             ESP_LOGE(TAG, "Malloc send parameter fail");
                             vSemaphoreDelete(s_example_espnow_queue);
@@ -434,6 +439,9 @@ static void example_espnow_task(void *pvParameter)
                     }
                     else if(strcmp((char *)payload, "some data") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
+
+                        ESP_LOGI(TAG, "Send data to "MACSTR", data: ACK", MAC2STR(my_peer));
+
                         if (send_param == NULL) {
                             ESP_LOGE(TAG, "Malloc send parameter fail");
                             vSemaphoreDelete(s_example_espnow_queue);

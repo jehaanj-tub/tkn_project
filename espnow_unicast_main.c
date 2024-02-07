@@ -203,7 +203,9 @@ static void example_espnow_task(void *pvParameter)
     bool is_broadcast = false;
     
     vTaskDelay(5000 / portTICK_PERIOD_MS);
-    ESP_LOGI(TAG, "Start sending broadcast data");
+    //ESP_LOGI(TAG, "Start sending broadcast data");
+
+    example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
 
     /* Start sending broadcast ESPNOW data. */
     //example_espnow_send_param_t *send_param = (example_espnow_send_param_t *)pvParameter;
@@ -220,7 +222,6 @@ static void example_espnow_task(void *pvParameter)
     if(sender == true) {
         ESP_LOGI(TAG, "Send data to "MACSTR", data: RTS", MAC2STR(my_peer));
 
-        example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
         if (send_param == NULL) {
             ESP_LOGE(TAG, "Malloc send parameter fail");
             vSemaphoreDelete(s_example_espnow_queue);
@@ -242,7 +243,7 @@ static void example_espnow_task(void *pvParameter)
         memcpy(send_param->dest_mac, my_peer, ESP_NOW_ETH_ALEN);
         example_espnow_data_prepare(send_param);
 
-        ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+        //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
             ESP_LOGE(TAG, "Send error");
             example_espnow_deinit(send_param);
@@ -319,7 +320,7 @@ static void example_espnow_task(void *pvParameter)
                     memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                     example_espnow_data_prepare(send_param);
 
-                    ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+                    //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
                     if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
                         ESP_LOGE(TAG, "Send error");
                         example_espnow_deinit(send_param);
@@ -354,7 +355,7 @@ static void example_espnow_task(void *pvParameter)
                         memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                         example_espnow_data_prepare(send_param);
 
-                        ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+                        //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
                         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
                             ESP_LOGE(TAG, "Send error");
                             example_espnow_deinit(send_param);
@@ -389,7 +390,7 @@ static void example_espnow_task(void *pvParameter)
                         memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                         example_espnow_data_prepare(send_param);
 
-                        ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+                        //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
                         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
                             ESP_LOGE(TAG, "Send error");
                             example_espnow_deinit(send_param);
@@ -422,7 +423,7 @@ static void example_espnow_task(void *pvParameter)
                         example_espnow_data_prepare(send_param);
                         
 
-                        ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+                        //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
                         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
                             ESP_LOGE(TAG, "Send error");
                             example_espnow_deinit(send_param);
@@ -455,7 +456,7 @@ static void example_espnow_task(void *pvParameter)
                         example_espnow_data_prepare(send_param);
                         
 
-                        ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
+                        //ESP_LOGI(TAG, "send data to "MACSTR"", MAC2STR(send_param->dest_mac));
                         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
                             ESP_LOGE(TAG, "Send error");
                             example_espnow_deinit(send_param);

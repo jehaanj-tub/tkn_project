@@ -39,7 +39,7 @@ static uint16_t s_example_espnow_seq[EXAMPLE_ESPNOW_DATA_MAX] = { 0, 0 };
 
 //uint8_t mac_address_list[];
 
-bool sender = true;
+bool sender = false;
 
 static void example_espnow_deinit(example_espnow_send_param_t *send_param);
 
@@ -215,7 +215,12 @@ static void example_espnow_task(void *pvParameter)
         vTaskDelete(NULL);
     }*/
 
-    static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x34, 0x85, 0x18, 0xb9, 0x1b, 0x9c };
+    if(sender == true) {
+        static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x34, 0x85, 0x18, 0xb9, 0x1b, 0x9c };
+    }
+    else {
+        static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x48, 0x27, 0xe2, 0x3b, 0x30, 0xc4 };
+    }
 
     add_peer(my_peer, true);
 

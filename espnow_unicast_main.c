@@ -39,7 +39,14 @@ static uint16_t s_example_espnow_seq[EXAMPLE_ESPNOW_DATA_MAX] = { 0, 0 };
 
 //uint8_t mac_address_list[];
 
-bool sender = true;
+// SET THE FOLLOWING VARIABLES
+//////////////////////////////////////////////////////////////////////////////////////////
+bool sender = true; // Set to true if sender, false if receiver                         //
+                                                                                        //
+// Uncomment address of peer (modify address of peer if needed)                      //                                                                  //
+//static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x34, 0x85, 0x18, 0xb9, 0x1b, 0x9c };    //
+static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x48, 0x27, 0xe2, 0x3b, 0x30, 0xc4 };      //
+//////////////////////////////////////////////////////////////////////////////////////////
 
 static void example_espnow_deinit(example_espnow_send_param_t *send_param);
 
@@ -194,38 +201,41 @@ static void send_broadcast(void *pvParameter)
     vTaskDelete(NULL);
 }
 
-static void send_data(example_espnow_send_param_t *send_param, const uint8_t *mac_addr, char *data)
+static void send_data(example_espnow_send_param_t *send_param, const uint8_t *mac_addr, char *data, int size)
 {
     ESP_LOGI(TAG, "Send data to "MACSTR", data: %s", MAC2STR(mac_addr), data);
+    
+    //printf("%u\n",size);
+    
+    if (send_param == NULL) {
+        ESP_LOGE(TAG, "Malloc send parameter fail");
+        vSemaphoreDelete(s_example_espnow_queue);
+        esp_now_deinit();
+        return;
+    }
+    
+    memset(send_param, 0, sizeof(example_espnow_send_param_t));
+    send_param->len = sizeof(example_espnow_data_t) + size;
+    send_param->buffer = malloc(send_param->len);
+    if (send_param->buffer == NULL) {
+        ESP_LOGE(TAG, "Malloc send buffer fail");
+        free(send_param);
+        vSemaphoreDelete(s_example_espnow_queue);
+        esp_now_deinit();
+        return;
+    }
+    example_espnow_data_t *buf = (example_espnow_data_t *)send_param->buffer;
+    memcpy(buf->payload, data, size);
+    memcpy(send_param->dest_mac, mac_addr, ESP_NOW_ETH_ALEN);
+    example_espnow_data_prepare(send_param);
 
-        if (send_param == NULL) {
-            ESP_LOGE(TAG, "Malloc send parameter fail");
-            vSemaphoreDelete(s_example_espnow_queue);
-            esp_now_deinit();
-            return;
-        }
-        memset(send_param, 0, sizeof(example_espnow_send_param_t));
-        send_param->len = sizeof(example_espnow_data_t) + sizeof(data);
-        send_param->buffer = malloc(send_param->len);
-        if (send_param->buffer == NULL) {
-            ESP_LOGE(TAG, "Malloc send buffer fail");
-            free(send_param);
-            vSemaphoreDelete(s_example_espnow_queue);
-            esp_now_deinit();
-            return;
-        }
-        example_espnow_data_t *buf = (example_espnow_data_t *)send_param->buffer;
-        memcpy(buf->payload, data, 4);
-        memcpy(send_param->dest_mac, mac_addr, ESP_NOW_ETH_ALEN);
-        example_espnow_data_prepare(send_param);
+    if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
+        ESP_LOGE(TAG, "Send error");
+        example_espnow_deinit(send_param);
+        vTaskDelete(NULL);
+    }
 
-        if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
-            ESP_LOGE(TAG, "Send error");
-            example_espnow_deinit(send_param);
-            vTaskDelete(NULL);
-        }
-
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
 static void example_espnow_task(void *pvParameter)
@@ -248,14 +258,10 @@ static void example_espnow_task(void *pvParameter)
         vTaskDelete(NULL);
     }*/
 
-    static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x34, 0x85, 0x18, 0xb9, 0x1b, 0x9c };
-    
-    //static uint8_t my_peer[ESP_NOW_ETH_ALEN] = { 0x48, 0x27, 0xe2, 0x3b, 0x30, 0xc4 };
-
     add_peer(my_peer, true);
 
     if(sender == true) {
-        send_data(send_param, my_peer, "RTS");
+        send_data(send_param, my_peer, "RTS", 4);
     }
 
     while (xQueueReceive(s_example_espnow_queue, &evt, portMAX_DELAY) == pdTRUE) {
@@ -305,29 +311,29 @@ static void example_espnow_task(void *pvParameter)
 
                     example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
                     
-                    send_data(send_param, recv_cb->mac_addr, "RTS");
+                    send_data(send_param, recv_cb->mac_addr, "RTS", 4);
                 }
                 else if (ret == EXAMPLE_ESPNOW_DATA_UNICAST) {
                     ESP_LOGI(TAG, "Receive %dth unicast data from: "MACSTR", len: %d, data: %s", recv_seq, MAC2STR(recv_cb->mac_addr), recv_cb->data_len, payload);
                     if(strcmp((char *)payload,"RTS") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
 
-                        send_data(send_param, recv_cb->mac_addr, "CTS");
+                        send_data(send_param, recv_cb->mac_addr, "CTS", 4);
                     }
                     else if(strcmp((char *)payload,"CTS") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
 
-                        send_data(send_param, recv_cb->mac_addr, "Some data");
+                        send_data(send_param, recv_cb->mac_addr, "Some data", 10);
                     }
                     else if(strcmp((char *)payload,"Some data") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
 
-                        send_data(send_param, recv_cb->mac_addr, "ACK");
+                        send_data(send_param, recv_cb->mac_addr, "ACK", 4);
                     }
                     else if(strcmp((char *)payload, "ACK") == 0){
                         example_espnow_send_param_t *send_param = malloc(sizeof(example_espnow_send_param_t));
 
-                        send_data(send_param, recv_cb->mac_addr, "RTS");
+                        send_data(send_param, recv_cb->mac_addr, "RTS", 4);
                     }
                 }
                 else {
